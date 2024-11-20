@@ -1,0 +1,22 @@
+
+
+
+ALTER TABLE Fact_Movie
+ALTER COLUMN vote_average FLOAT;
+
+ALTER TABLE Fact_Movie
+ALTER COLUMN vote_count INT;
+
+ALTER TABLE Fact_Movie
+ALTER COLUMN revenue FLOAT;
+
+ALTER TABLE Fact_Movie
+ALTER COLUMN runtime INT;
+
+ALTER TABLE Fact_Movie
+ALTER COLUMN budget FLOAT;
+
+ALTER TABLE Fact_Movie
+ALTER COLUMN popularity FLOAT;
+
+SELECT *FROM Fact_Movie

@@ -1,0 +1,364 @@
+﻿-- Câu 1: Liệt kê top 10 phim có doanh thu cao nhất.
+SELECT
+  {[Measures].[Sum Revenue]} ON COLUMNS,
+  TOPCOUNT([DIM Movie].[Title].[Title].MEMBERS,10,[Measures].[Sum Revenue]) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 2: Liệt kê top 20 Đạo diễn sản xuất phim hay nhất 
+SELECT
+  {[Measures].[Vote Average]} ON COLUMNS,
+  TOPCOUNT ([DIM Director].[Director].[Director].MEMBERS, 20, [Measures].[Vote Average]) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 3: Liệt kê Top 10 các thể loại phim và tổng doanh thu của từng thể loại
+SELECT
+  {[Measures].[Sum Revenue]} ON COLUMNS,
+  TOPCOUNT ([DIM Genre].[Genres].[Genres].MEMBERS, 10, [Measures].[Sum Revenue]) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 4: Hiển thị số lượt bình chọn của 10 bộ phim có số lượt bình chọn cao nhất.
+SELECT
+  ([Measures].[Vote Count]) ON COLUMNS,
+  ( Tail(Order([DIM Movie].[Title].[Title].MEMBERS, [Measures].[Vote Count], ASC), 10) ) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 5: Tìm số lượng phim theo từng đạo diễn
+SELECT 
+    NON EMPTY [Measures].[Fact Movie Count] ON COLUMNS,
+    NON EMPTY TOPCOUNT([DIM Director].[Director].[Director].MEMBERS, 10, [Measures].[Fact Movie Count]) ON ROWS
+FROM [MOVIE SSIS]
+WHERE (
+    [DIM Movie].[Title].[Title].MEMBERS
+)
+
+-- Câu 6: Số lượng phim được phát hành theo tháng trong năm 2023
+SELECT
+  {[Measures].[Fact Movie Count]} ON COLUMNS,
+  TOPCOUNT([DIM Time].[Month].[Month].MEMBERS, 10, [Measures].[Fact Movie Count]) ON ROWS
+FROM [MOVIE SSIS]
+WHERE (
+  [DIM Movie].[status].[Released],
+  [DIM Time].[Year].[Year].&[2023]
+)
+
+--Câu 7: Thống kê số lượng phim được sản xuất bởi các nước (Production Countries) 
+-- United States of America, United Kingdom, Japan, India và Vietnam
+SELECT
+  {[Measures].[Fact Movie Count]} ON COLUMNS,
+  TOPCOUNT({
+    [DIM Country].[Production Countries].[United States of America],
+    [DIM Country].[Production Countries].[United Kingdom],
+    [DIM Country].[Production Countries].[Japan],
+    [DIM Country].[Production Countries].[India],
+    [DIM Country].[Production Countries].[Vietnam]
+  }, 5, [Measures].[Fact Movie Count]) ON ROWS
+FROM [MOVIE SSIS]
+
+
+-- Câu 8: Tìm 5 phim có thời lượng Runtime cao nhất 2020
+
+SELECT 
+    NON EMPTY {[Measures].[Runtime]} ON COLUMNS,
+    NON EMPTY TOPCOUNT(
+        FILTER(
+            [DIM Movie].[Title].[Title].Members,
+            [DIM Time].[Year].CurrentMember.MemberValue = '2020'
+        ),
+        5,
+        [Measures].[Runtime]
+    ) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 9: Với top 5 Tổng doanh thu của từng quốc gia sản xuất phim, sắp xếp theo thứ tự tăng dần.
+SELECT
+  {[Measures].[Sum Revenue]} ON COLUMNS,
+  ORDER(
+    TOPCOUNT(
+      [DIM Country].[Production Countries].[Production Countries].MEMBERS,
+      5,
+      [Measures].[Sum Revenue]
+    ),
+    [Measures].[Sum Revenue],
+    ASC
+  ) ON ROWS
+FROM [MOVIE SSIS]
+-- sắp xếp tập hớp các thành viênn có giá trị trong banrng dim country
+-- Câu 10: Tổng số phim được phát hành theo tháng và năm
+SELECT
+  {[Measures].[Fact Movie Count]} ON COLUMNS,
+  CROSSJOIN([DIM Time].[Month].[Month].MEMBERS, [DIM Time].[Year].[Year].MEMBERS) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 11: Thống kê số lượng phim được phát hành theo quốc gia của từng năm.
+SELECT
+{[Measures].[Fact Movie Count]} ON COLUMNS,
+NON EMPTY CROSSJOIN([DIM Time].[Year].[Year].MEMBERS, [DIM Country].[Production Countries].[Production Countries].MEMBERS) ON ROWS
+FROM [MOVIE SSIS]
+WHERE (
+[DIM Movie].[Status].[Released]
+)
+--- sử dụng để loại bỏ các hàng và cột k có dữ leieju null và empty.
+--- cross tạo ra tổ hợp tất cả các thành viên của dim time , lấy tất cả các thành viên 
+-- ( lấy tât cả các năm  trong chiều year )
+-- Câu 12: Tính tổng doanh thu của các phim theo năm và tháng.
+SELECT
+{[Measures].[Sum Revenue]} ON COLUMNS,
+NON EMPTY CROSSJOIN([DIM Time].[Year].[Year].MEMBERS, [DIM Time].[Month].[Month].MEMBERS) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 13: Liệt kê top 5 thể loại phim phổ biến nhất dựa trên số lượng phim.
+
+SELECT
+  {[Measures].[Fact Movie Count]} ON COLUMNS,
+  TOPCOUNT(
+    [DIM Genre].[Genres].[Genres].MEMBERS,
+    5,
+    [Measures].[Fact Movie Count]
+  ) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 14 : Tính tổng số lượng phim theo thể loại và quốc gia sản xuất.
+SELECT
+{[Measures].[Fact Movie Count]} ON COLUMNS,
+NON EMPTY CROSSJOIN([DIM Genre].[Genres].[Genres].MEMBERS, [DIM Country].[Production Countries].[Production Countries].MEMBERS) ON ROWS
+FROM [MOVIE SSIS]
+
+-- Câu 15: Tính tổng số lượng phim được phát hành theo quốc gia và tháng.
+SELECT
+{[Measures].[Fact Movie Count]} ON COLUMNS,
+NON EMPTY CROSSJOIN([DIM Country].[Production Countries].[Production Countries].MEMBERS, [DIM Time].[Month].[Month].MEMBERS) ON ROWS
+FROM [MOVIE SSIS]
+
+-------- TOP 1 DOANH THU PHIM LẤY THEO TỪNG THÁNG và NĂM { CÁI NÀY LÀ DEMO CÁI CŨ)
+SELECT
+  {[Measures].[Sum Revenue]} ON COLUMNS,
+  TOPCOUNT([DIM Movie].[Title].[Title].MEMBERS, 10, [Measures].[Sum Revenue]) ON ROWS
+FROM [MOVIE SSIS]
+
+WITH 
+  MEMBER [Measures].[Top1RevenueMovie] AS 
+    TOPCOUNT(
+      ([DIM Movie].[Title].[Title].MEMBERS), 
+      1, 
+      [Measures].[Sum Revenue]
+    ).ITEM(0).NAME
+
+SELECT
+  {[Measures].[Sum Revenue], [Measures].[Top1RevenueMovie]} ON COLUMNS,
+  NON EMPTY
+  CROSSJOIN(
+    [DIM Time].[Year].[Year].MEMBERS,
+    [DIM Time].[Month].[Month].MEMBERS
+  ) ON ROWS
+FROM [MOVIE SSIS]
+WHERE 
+  [DIM Movie].[Title].[Title].MEMBERS
+
+  ----- TOP 1 DOANH THU LẤY THEO NĂM 
+WITH 
+  MEMBER [Measures].[Top1RevenueMovie] AS 
+    TOPCOUNT(
+      [DIM Movie].[Title].[Title].MEMBERS, 
+      1, 
+      [Measures].[Sum Revenue]
+    ).ITEM(0).NAME
+
+SELECT
+  {[Measures].[Sum Revenue], [Measures].[Top1RevenueMovie]} ON COLUMNS,
+  NON EMPTY
+  [DIM Time].[Year].[Year].MEMBERS ON ROWS
+FROM [MOVIE SSIS]
+
+
+--- CHỈ LẤY THEO TỪ NĂM 2017 - 2022
+WITH 
+  MEMBER [Measures].[Top1RevenueMovie] AS 
+    TOPCOUNT(
+      [DIM Movie].[Title].[Title].MEMBERS, 
+      1, 
+      [Measures].[Sum Revenue]
+    ).ITEM(0).NAME
+
+SELECT
+  {[Measures].[Sum Revenue], [Measures].[Top1RevenueMovie]} ON COLUMNS,
+  NON EMPTY
+  FILTER(
+    [DIM Time].[Year].[Year].MEMBERS,
+    [DIM Time].[Year].CURRENTMEMBER.MEMBER_VALUE >= 2017 AND [DIM Time].[Year].CURRENTMEMBER.MEMBER_VALUE <= 2022
+  ) ON ROWS
+FROM [MOVIE SSIS]
+
+
+----- LẤY TẤT CẢ THÁNG TRONG NĂM 2019 
+WITH 
+  MEMBER [Measures].[Top1RevenueMovie] AS 
+    TOPCOUNT(
+      [DIM Movie].[Title].[Title].MEMBERS, 
+      1, 
+      [Measures].[Sum Revenue]
+    ).ITEM(0).NAME
+
+SELECT
+  {[Measures].[Sum Revenue], [Measures].[Top1RevenueMovie]} ON COLUMNS,
+  NON EMPTY
+  ORDER(
+    [DIM Time].[Month].[Month].MEMBERS,
+    [DIM Time].[Month].CURRENTMEMBER.PROPERTIES("KEY0", TYPED),
+    BASC
+  ) ON ROWS
+FROM [MOVIE SSIS]
+WHERE 
+  [DIM Time].[Year].[Year].&[2019]
+
+ 
+
+ --- LIỆT KÊ PHIM CÓ ĐỘ PHỔ BIẾN CAO NHẤT THEO TỪNG NĂM 
+SELECT
+  {[Measures].[Popularity]} ON COLUMNS,
+  NON EMPTY
+  GENERATE([DIM Time].[Year].[Year].MEMBERS,
+  [DIM Time].[Year].CURRENTMEMBER * TOPCOUNT(
+				[DIM Movie].[Title].[Title].MEMBERS, 1,
+				[Measures].[Popularity]))  ON ROWS
+FROM [MOVIE SSIS]
+WHERE 
+  [DIM Movie].[Status].[Released]
+
+
+
+  ----------------ÔN THI------------
+ -- TOPCOUNT
+ -- Liệt kê Top 3 công ty có số lượng bán Bất Động Sản nhiều nhất
+
+ SELECT [Measures].[Fact Count] ON COLUMNS,
+   TOPCOUNT([Dim CongTy].[TenCT].[TenCT].MEMBERS, 3 , [Measures].[Fact_Ban]) ON ROWS 
+ FROM (Ban_BDS)
+
+
+ -- Liệt kê 3 tháng có tổng giá thỏa thuận đã bán lớn nhất
+  SELECT [Measures].[GiaThoaThuan] ON COLUMNS,
+    TOPCOUNT([Dim Time].[Thang].[Thang].MEMBERS, 3 , [Measures].[GiaThoaThuan])} ON ROWS 
+ FROM [Ban_BatDongSan]
+
+-- FILTER 
+-- Lọc các bất động sản có giá thỏa thuận > 1000000
+SELECT NON EMPTY {[Measures].[GiaThoaThuan] ON COLUMNS,
+  NON EMPTY { FILTER ([Dim BatDongSan].[MaBDS]. CHILDREN * [Dim BatDongSan].[Loai].CHILDER,
+  [Measures].[GiaThoaThuan] > 1000000) } ON ROWS
+FROM [Ban_BatDongSan]
+
+-- HAVING
+-- Lọc các bất động sản có giá thỏa thuận < 1000000
+SELECT NON EMPTY {[Measures].[GiaThoaThuan] ON COLUMNS,
+  NON EMPTY { ([Dim BatDongSan].[MaBDS]. CHILDREN * [Dim BatDongSan].[Loai].CHILDER,
+  HAVING [Measures].[GiaThoaThuan] < 1000000) } ON ROWS
+FROM [Ban_BatDongSan]
+
+
+-- DRILL DOWN 
+-- Thống kê bất động sản có giá thỏa thuận cao nhất theo từng tháng trong năm 2024
+SELECT NON EMPTY {[Measures].[GiaThoaThuan Max] ON COLUMNS,
+   NON EMPTY {[Dim Time].[Thang].[Thang].MEMBERS} ON ROWS,
+FROM [Ban_BatDongSan]
+WHERE ([Dim Time].[Nam]. &[2024])
+
+-- GENERATE
+-- Với mỗi BDS Thanh Pho truy vấn ra top 2 khách hàng đã mua BDS nhiều nhất 
+SELECT [Measures].[Fact Count] ON COLUMNS,
+  NON EMPTY GENERATE(
+            [Dim BatDongSan].[ThanhPho].[ThanhPho].MEMBERS,
+			TOPCOUNT ( [Dim BatDongSan].[ThanhPho].CURRENTMEMBER * [Dim KhachHang].[MaKH].[MaKH].MEMBERS, 2, 
+			([Measures].[Fact Count])) ) ON ROWS
+FROM [Ban_BatDongSan]
+
+
+-- GENERATE
+-- Với mỗi BDS Thanh Pho truy vấn ra top 2 Những khách hàng đã mua BDS nhiều nhất trong năm 2023 và 2024
+SELECT [Measures].[Fact Count] ON COLUMNS,
+  Union  TOPCOUNT(
+            [Dim KhachHang].[MaKH].[MaKH].MEMBERS, 2 ,
+			([Measures].[Fact Count],[Dim Time].[Nam].&[2023]),
+		  TOPCOUNT(
+            [Dim KhachHang].[MaKH].[MaKH].MEMBERS, 2 ,
+			([Measures].[Fact Count],[Dim Time].[Nam].&[2024]))) ON ROWS 
+FROM [Ban_BatDongSan]
+
+
+
+
+
+-- FILTER 
+-- Lọc các bất động sản có giá thỏa thuận > 1000000
+SELECT NON EMPTY {[Measures].[GiaThoaThuan] ON COLUMNS,
+  NON EMPTY { FILTER ([Dim BatDongSan].[MaBDS]. MEMBERS * [Dim BatDongSan].[Loai].MEMBERS,
+  [Measures].[GiaThoaThuan] > 1000000) } ON ROWS
+FROM [Ban_BatDongSan]
+
+
+-- HAVING
+-- Lọc các bất động sản có giá thỏa thuận < 1000000
+SELECT NON EMPTY {[Measures].[GiaThoaThuan] ON COLUMNS,
+  NON EMPTY { ([Dim BatDongSan].[MaBDS]. MEMBERS, [Dim BatDongSan].[Loai].MEMBERS,
+  HAVING [Measures].[GiaThoaThuan] < 1000000) } ON ROWS
+FROM [Ban_BatDongSan]
+
+WITH MEMBER [Measures].[Gia Chenh Lech] AS 
+  [Measures].[Gia De Nghi] - [Measures].[Gia Thoa Thuan]
+SELECT [Measures].[Gia Chenh Lech] ON COLUMNS,
+NON EMPTY ORDER(
+  [Dim Cong TY].[Cty].[Cty].MEMBERS * 
+  [Dim Khach Hang].[KH].[KH].MEMBERS,
+  [Measures].[Gia Chenh Lech],
+  BDESC
+) ON ROWS
+FROM [Ban_BatDongSan];
+
+
+
+-- Thống kê số lượng giao dịch trong quý 3 nhưng không lấy tháng 9 
+SELECT 
+     [Measures].[Number of Transactions] on 0,
+			EXCEPT	(
+					[Dim Time].[Month].CHILDREN,
+					[Dim Time].[Month].&[9]) on 1
+	FROM [Credit Card Transactions DW]
+	WHERE [Dim Time].[Quarter Of Year].&[Q3 2020]
+
+
+-- Thống kê số lượng bất động sản trong quý 3 nhưng không lấy tháng 9 
+SELECT 
+     [Measures].[SoLuongban] on 0,
+			EXCEPT	(
+					[Dim Time].[Month].CHILDREN,
+					[Dim Time].[Month].&[9]) on 1
+	FROM [BDS]
+	WHERE [Dim Time].[Quy].&[Q3 2020]
+
+-- Ví dụ: Lấy các bất động sản có trong cả hai thành phố "Hanoi" và "HoChiMinh".
+SELECT 
+  {[Measures].[Fact Count]} ON COLUMNS,
+  INTERSECT(
+    [Dim BatDongSan].[ThanhPho].[Hanoi].Children,
+    [Dim BatDongSan].[ThanhPho].[HoChiMinh].Children
+  ) ON ROWS
+FROM [BatDongSan]
+
+
+-- Lấy các bất động sản nằm ở cả hai thành phố "Hanoi" và "HoChiMinh"
+SELECT 
+  {[Measures].[Fact Count]} ON COLUMNS,
+  INTERSECT(
+    [Dim BatDongSan].[ThanhPho].[Hanoi].Children,
+    [Dim BatDongSan].[ThanhPho].[HoChiMinh].Children
+  ) ON ROWS
+FROM [BatDongSan]
+
+-- Lấy các bất động sản nằm trong "Hanoi" nhưng không nằm trong "HoChiMinh"
+SELECT 
+  {[Measures].[Fact Count]} ON COLUMNS,
+  EXCEPT(
+    [Dim BatDongSan].[ThanhPho].[Hanoi].Children,
+    [Dim BatDongSan].[ThanhPho].[HoChiMinh].Children
+  ) ON ROWS
+FROM [BatDongSan]
+
